@@ -1,0 +1,24 @@
+{
+  "name": "better_path",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Propuesta de juego para proyecto final MATEMÁTICAS DISCRETAS 2026 - 1",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MHINCA-28324/BETTER_PATH.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MHINCA-28324/BETTER_PATH/issues"
+  },
+  "homepage": "https://github.com/MHINCA-28324/BETTER_PATH#readme"
+}
