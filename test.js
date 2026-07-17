@@ -1,29 +1,57 @@
 import { Graph } from './js/graph.js';
-import { dijkstra } from './js/algorithms.js';
+import { dijkstra, checkEulerianPath, checkHamiltonianPath } from './js/algorithms.js';
+import { Game } from './js/game.js';
 
-const g = new Graph();
-g.addNode('A', 'Casa');
-g.addNode('B', 'Parque');
-g.addNode('C', 'Universidad');
-g.addEdge('A', 'B', 4);
-g.addEdge('B', 'C', 2);
-g.addEdge('A', 'C', 10);
+// ============================================
+// GRAFO TEMÁTICO REAL: "El camino hacia el título"
+// ============================================
 
-const resultado = dijkstra(g, 'A', 'C');
-console.log(resultado);
+const universityGraph = new Graph();
 
-import { checkEulerianPath } from './js/algorithms.js';
+// Nodos: id, nombre visible, posición x/y (para cuando Robert dibuje)
+universityGraph.addNode('inicio', 'Inicio', 50, 300);
+universityGraph.addNode('calc1', 'Cálculo I', 200, 150);
+universityGraph.addNode('calc2', 'Cálculo II', 350, 100);
+universityGraph.addNode('ed', 'Ecuaciones Diferenciales', 500, 100);
+universityGraph.addNode('prog1', 'Programación I', 200, 450);
+universityGraph.addNode('estructuras', 'Estructuras de Datos', 350, 450);
+universityGraph.addNode('discretas', 'Matemáticas Discretas', 500, 450);
+universityGraph.addNode('fisica1', 'Física I', 350, 250);
+universityGraph.addNode('fisica2', 'Física II', 500, 250);
+universityGraph.addNode('algebra', 'Álgebra Lineal', 650, 350);
+universityGraph.addNode('proyecto', 'Proyecto Final', 800, 300);
+universityGraph.addNode('titulo', 'Título de Ingeniero', 950, 300);
 
-// Grafo con circuito euleriano (todos los nodos grado par)
-const g2 = new Graph();
-g2.addNode('A', 'A'); g2.addNode('B', 'B'); g2.addNode('C', 'C');
-g2.addEdge('A', 'B'); g2.addEdge('B', 'C'); g2.addEdge('C', 'A');
+// Aristas: from, to, peso (ej. créditos o "dificultad")
+universityGraph.addEdge('inicio', 'calc1', 3);
+universityGraph.addEdge('inicio', 'prog1', 3);
+universityGraph.addEdge('calc1', 'calc2', 4);
+universityGraph.addEdge('calc1', 'fisica1', 3);
+universityGraph.addEdge('calc2', 'ed', 4);
+universityGraph.addEdge('prog1', 'estructuras', 3);
+universityGraph.addEdge('estructuras', 'discretas', 3);
+universityGraph.addEdge('fisica1', 'fisica2', 4);
+universityGraph.addEdge('discretas', 'algebra', 3);
+universityGraph.addEdge('fisica2', 'algebra', 2);
+universityGraph.addEdge('ed', 'proyecto', 5);
+universityGraph.addEdge('algebra', 'proyecto', 5);
+universityGraph.addEdge('proyecto', 'titulo', 1);
 
-console.log('Circuito esperado:', checkEulerianPath(g2));
+// ============================================
+// PRUEBAS SOBRE EL GRAFO TEMÁTICO
+// ============================================
 
-// Grafo sin euleriano (3 nodos de grado impar, más de 2)
-const g3 = new Graph();
-g3.addNode('A','A'); g3.addNode('B','B'); g3.addNode('C','C'); g3.addNode('D','D');
-g3.addEdge('A','B'); g3.addEdge('A','C'); g3.addEdge('A','D');
+console.log('--- RUTA MÁS CORTA: Inicio → Título ---');
+console.log(dijkstra(universityGraph, 'inicio', 'titulo'));
 
-console.log('No debería existir:', checkEulerianPath(g3));
+console.log('\n--- ¿CAMINO EULERIANO? ---');
+console.log(checkEulerianPath(universityGraph));
+
+console.log('\n--- ¿CAMINO HAMILTONIANO? ---');
+console.log(checkHamiltonianPath(universityGraph));
+
+console.log('\n--- SIMULACIÓN DE PARTIDA ---');
+const game = new Game(universityGraph, 'inicio', 'titulo');
+console.log('Estado inicial:', game.getState());
+console.log('Jugador 1 mueve a calc1:', game.movePlayer('player1', 'calc1'));
+console.log('IA (player2) juega:', game.playAITurn());
