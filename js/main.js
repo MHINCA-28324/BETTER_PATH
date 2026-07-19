@@ -4,7 +4,7 @@
 import { Graph } from './graph.js';
 import { dijkstra, checkEulerianPath, checkHamiltonianPath } from './algorithms.js';
 import { Game } from './game.js';
-import { drawGraph, drawPlayers } from './render.js';
+import { drawGraph, drawPlayers, spritesReady, animateJump } from './render.js';
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -98,24 +98,40 @@ canvas.addEventListener('click', (event) => {
     const node = graph.nodes.get(id);
     const dist = Math.hypot(node.x - x, node.y - y);
     if (dist <= 22) {
+      const prevNode = graph.nodes.get(game.players.player1.position);
       const moveResult = game.movePlayer('player1', id);
+
       if (moveResult.success) {
+        const targetNode = graph.nodes.get(id);
+        animateJump('player1', prevNode, targetNode, render);
+
         resultadoDiv.textContent = moveResult.gameOver
           ? `¡Jugador 1 ganó llegando a ${id}!`
           : '';
+
         if (!moveResult.gameOver) {
+          const prevAiNode = graph.nodes.get(game.players.player2.position);
           const aiResult = game.playAITurn();
+
+          if (aiResult.success) {
+            const aiTargetNode = graph.nodes.get(game.players.player2.position);
+            animateJump('player2', prevAiNode, aiTargetNode, render);
+          }
+
           if (aiResult.gameOver) {
-            resultadoDiv.textContent = `¡La IA ganó!`;
+            resultadoDiv.textContent = '¡La IA ganó!';
           }
         }
       } else {
         resultadoDiv.textContent = moveResult.reason;
       }
+
       render();
       break;
     }
   }
 });
 
-render();
+render(); // primer dibujo inmediato (con fallback si aún no cargan)
+spritesReady.then(render); // redibuja cuando ya cargaron todas las imágenes
+

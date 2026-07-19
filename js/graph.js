@@ -7,12 +7,12 @@ export class Graph {
       this.adjacency = new Map(); // id -> [{ to, weight }]
     }
   
-    addNode(id, name, x = 0, y = 0) {
+    addNode(id, name, x = 0, y = 0, category = 'obligatoria') {
       if (this.nodes.has(id)) {
         console.warn(`El nodo ${id} ya existe.`);
         return;
       }
-      this.nodes.set(id, { name, x, y });
+      this.nodes.set(id, { name, x, y, category });
       this.adjacency.set(id, []);
     }
   
