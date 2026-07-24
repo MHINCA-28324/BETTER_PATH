@@ -1,67 +1,78 @@
 // main.js
-// Punto de entrada: conecta el grafo, el juego y el render con los eventos del DOM.
-
-import { Graph } from './graph.js';
 import { dijkstra, checkEulerianPath, checkHamiltonianPath } from './algorithms.js';
 import { Game } from './game.js';
 import { drawGraph, drawPlayers, spritesReady, animateJump } from './render.js';
+import { LEVELS } from './levels.js';
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const resultadoDiv = document.getElementById('resultado');
 const turnIndicator = document.getElementById('turn-indicator');
 
-// --- Grafo temático ---
-function buildGraph() {
-  const g = new Graph();
-  g.addNode('inicio', 'Inicio', 60, 300, 'obligatoria');
-  g.addNode('calc1', 'Cálculo I', 220, 150, 'obligatoria');
-  g.addNode('calc2', 'Cálculo II', 380, 100, 'obligatoria');
-  g.addNode('ed', 'Ecuaciones Dif.', 540, 100, 'optativa');
-  g.addNode('prog1', 'Programación I', 220, 450, 'obligatoria');
-  g.addNode('estructuras', 'Estructuras de Datos', 380, 450, 'obligatoria');
-  g.addNode('discretas', 'Mate. Discretas', 540, 450, 'obligatoria');
-  g.addNode('fisica1', 'Física I', 380, 250, 'obligatoria');
-  g.addNode('fisica2', 'Física II', 540, 250, 'optativa');
-  g.addNode('algebra', 'Álgebra Lineal', 700, 350, 'electiva');
-  g.addNode('proyecto', 'Proyecto Final', 850, 300, 'obligatoria');
-  g.addNode('titulo', 'Título Ingeniero', 950, 300, 'meta');
+const screens = {
+  menu: document.getElementById('screen-menu'),
+  levels: document.getElementById('screen-levels'),
+  game: document.getElementById('screen-game'),
+  gameover: document.getElementById('screen-gameover'),
+};
 
-  g.addEdge('inicio', 'calc1', 3);
-  g.addEdge('inicio', 'prog1', 3);
-  g.addEdge('calc1', 'calc2', 4);
-  g.addEdge('calc1', 'fisica1', 3);
-  g.addEdge('calc2', 'ed', 4);
-  g.addEdge('prog1', 'estructuras', 3);
-  g.addEdge('estructuras', 'discretas', 3);
-  g.addEdge('fisica1', 'fisica2', 4);
-  g.addEdge('discretas', 'algebra', 3);
-  g.addEdge('fisica2', 'algebra', 2);
-  g.addEdge('ed', 'proyecto', 5);
-  g.addEdge('algebra', 'proyecto', 5);
-  g.addEdge('proyecto', 'titulo', 1);
-
-  return g;
+function showScreen(name) {
+  Object.values(screens).forEach(s => s.style.display = 'none');
+  screens[name].style.display = 'block';
 }
 
-let graph = buildGraph();
-let game = new Game(graph, 'inicio', 'titulo');
+let selectedMode = 'ai'; // 'ai' | 'local'
+let graph = null;
+let game = null;
 let currentHighlightPath = [];
 
-function render() {
-  drawGraph(ctx, graph, currentHighlightPath);
-  drawPlayers(ctx, graph, game.players);
-  turnIndicator.textContent = game.winner
-    ? `¡Ganó ${game.winner}!`
-    : `Turno de: ${game.turn}`;
+// --- Navegación de pantallas ---
+document.getElementById('btn-mode-ai').addEventListener('click', () => {
+  selectedMode = 'ai';
+  showLevelSelect();
+});
+
+document.getElementById('btn-mode-local').addEventListener('click', () => {
+  selectedMode = 'local';
+  showLevelSelect();
+});
+
+document.getElementById('btn-back-menu').addEventListener('click', () => showScreen('menu'));
+document.getElementById('btn-menu').addEventListener('click', () => showScreen('menu'));
+document.getElementById('btn-gameover-menu').addEventListener('click', () => showScreen('menu'));
+
+function showLevelSelect() {
+  const container = document.getElementById('level-buttons');
+  container.innerHTML = '';
+  LEVELS.forEach((level) => {
+    const btn = document.createElement('button');
+    btn.className = 'menu-btn';
+    btn.textContent = level.name;
+    btn.addEventListener('click', () => startGame(level));
+    container.appendChild(btn);
+  });
+  showScreen('levels');
 }
 
-// --- Eventos de botones ---
+function startGame(level) {
+  graph = level.build();
+  canvas.width = level.canvasWidth;
+  canvas.height = level.canvasHeight;
+
+  game = new Game(graph, 'inicio', 'titulo', { vsAI: selectedMode === 'ai' });
+  currentHighlightPath = [];
+  resultadoDiv.textContent = '';
+
+  showScreen('game');
+  render();
+}
+
+// --- Botones de análisis matemático ---
 document.getElementById('btn-calcular-ruta').addEventListener('click', () => {
   const result = dijkstra(graph, 'inicio', 'titulo');
   currentHighlightPath = result.exists ? result.path : [];
   resultadoDiv.textContent = result.exists
-    ? `Ruta más corta: ${result.path.join(' → ')} (distancia: ${result.distance})`
+    ? `Ruta más corta: ${result.path.join(' → ')} (créditos: ${result.distance})`
     : 'No existe ruta disponible.';
   render();
 });
@@ -80,47 +91,80 @@ document.getElementById('btn-hamiltoniano').addEventListener('click', () => {
   render();
 });
 
-document.getElementById('btn-reiniciar').addEventListener('click', () => {
-  graph = buildGraph();
-  game = new Game(graph, 'inicio', 'titulo');
-  currentHighlightPath = [];
-  resultadoDiv.textContent = '';
-  render();
-});
+// --- Render principal ---
+function render() {
+  drawGraph(ctx, graph, currentHighlightPath);
+  drawPlayers(ctx, graph, game.players);
 
-// --- Click en el canvas para mover al jugador 1 ---
+  turnIndicator.textContent = game.winner
+    ? '¡Partida terminada!'
+    : `Turno de: ${game.turn === 'player1' ? 'Jugador 1' : (selectedMode === 'ai' ? 'IA' : 'Jugador 2')}`;
+
+  const state = game.getState();
+  if (!game.winner && state.player1Stuck) {
+    resultadoDiv.textContent = 'Jugador 1 no tiene movimientos válidos. Partida bloqueada.';
+  } else if (!game.winner && state.player2Stuck) {
+    resultadoDiv.textContent = 'El rival no tiene movimientos válidos. Partida bloqueada.';
+  }
+}
+
+function showGameOver() {
+  const p1 = game.players.player1;
+  const p2 = game.players.player2;
+  const winnerLabel = game.winner === 'player1' ? 'Jugador 1' : (selectedMode === 'ai' ? 'La IA' : 'Jugador 2');
+
+  document.getElementById('gameover-title').textContent = `¡Ganó ${winnerLabel}!`;
+  document.getElementById('gameover-stats').innerHTML = `
+    <p><strong>Jugador 1</strong> — Movimientos: ${p1.moves} | Créditos usados: ${p1.creditsUsed}</p>
+    <p><strong>${selectedMode === 'ai' ? 'IA' : 'Jugador 2'}</strong> — Movimientos: ${p2.moves} | Créditos usados: ${p2.creditsUsed}</p>
+  `;
+  showScreen('gameover');
+}
+
+// --- Clic en el canvas ---
 canvas.addEventListener('click', (event) => {
+  if (!game || game.winner) return;
+
   const rect = canvas.getBoundingClientRect();
   const x = event.clientX - rect.left;
   const y = event.clientY - rect.top;
+
+  const activePlayer = game.turn; // en modo local, ambos jugadores hacen clic; en modo IA, solo player1 debería
+
+  if (selectedMode === 'ai' && activePlayer !== 'player1') return; // espera a que la IA juegue sola
 
   for (const id of graph.getAllNodeIds()) {
     const node = graph.nodes.get(id);
     const dist = Math.hypot(node.x - x, node.y - y);
     if (dist <= 22) {
-      const prevNode = graph.nodes.get(game.players.player1.position);
-      const moveResult = game.movePlayer('player1', id);
+      const prevNode = graph.nodes.get(game.players[activePlayer].position);
+      const moveResult = game.movePlayer(activePlayer, id);
 
       if (moveResult.success) {
-        const targetNode = graph.nodes.get(id);
-        animateJump('player1', prevNode, targetNode, render);
+        animateJump(activePlayer, prevNode, node, render);
+        resultadoDiv.textContent = '';
 
-        resultadoDiv.textContent = moveResult.gameOver
-          ? `¡Jugador 1 ganó llegando a ${id}!`
-          : '';
+        if (moveResult.gameOver) {
+          render();
+          setTimeout(showGameOver, 500);
+          break;
+        }
 
-        if (!moveResult.gameOver) {
-          const prevAiNode = graph.nodes.get(game.players.player2.position);
-          const aiResult = game.playAITurn();
-
-          if (aiResult.success) {
-            const aiTargetNode = graph.nodes.get(game.players.player2.position);
-            animateJump('player2', prevAiNode, aiTargetNode, render);
-          }
-
-          if (aiResult.gameOver) {
-            resultadoDiv.textContent = '¡La IA ganó!';
-          }
+        // Modo IA: si ahora le toca a la IA, juega automáticamente
+        if (selectedMode === 'ai' && game.turn === 'player2') {
+          setTimeout(() => {
+            const prevAiNode = graph.nodes.get(game.players.player2.position);
+            const aiResult = game.playAITurn();
+            if (aiResult.success) {
+              const aiTargetNode = graph.nodes.get(game.players.player2.position);
+              animateJump('player2', prevAiNode, aiTargetNode, render);
+              if (aiResult.gameOver) {
+                render();
+                setTimeout(showGameOver, 500);
+              }
+            }
+            render();
+          }, 300);
         }
       } else {
         resultadoDiv.textContent = moveResult.reason;
@@ -132,6 +176,8 @@ canvas.addEventListener('click', (event) => {
   }
 });
 
-render(); // primer dibujo inmediato (con fallback si aún no cargan)
-spritesReady.then(render); // redibuja cuando ya cargaron todas las imágenes
+spritesReady.then(() => {
+  if (game) render();
+});
 
+showScreen('menu');

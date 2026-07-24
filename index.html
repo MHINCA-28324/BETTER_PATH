@@ -7,18 +7,45 @@
 </head>
 <body>
   <h1>BETTER-PATH</h1>
-  <p id="turn-indicator">Turno de: player1</p>
 
-  <canvas id="gameCanvas" width="1000" height="550"></canvas>
-
-  <div id="controls">
-    <button id="btn-calcular-ruta">Calcular ruta más corta</button>
-    <button id="btn-euleriano">Verificar Euleriano</button>
-    <button id="btn-hamiltoniano">Verificar Hamiltoniano</button>
-    <button id="btn-reiniciar">Reiniciar</button>
+  <!-- Pantalla: Menú principal -->
+  <div id="screen-menu" class="screen">
+    <h2>Elige un modo de juego</h2>
+    <button id="btn-mode-ai" class="menu-btn">Jugar contra la IA</button>
+    <button id="btn-mode-local" class="menu-btn">Modo Local (2 jugadores)</button>
   </div>
 
-  <div id="resultado"></div>
+  <!-- Pantalla: Selección de nivel -->
+  <div id="screen-levels" class="screen" style="display:none">
+    <h2>Elige un nivel</h2>
+    <div id="level-buttons"></div>
+    <button id="btn-back-menu" class="menu-btn secondary">Volver</button>
+  </div>
+
+  <!-- Pantalla: Juego -->
+  <div id="screen-game" class="screen" style="display:none">
+    <p id="turn-indicator">Turno de: player1</p>
+
+    <div id="canvas-wrapper">
+      <canvas id="gameCanvas" width="1100" height="600"></canvas>
+    </div>
+
+    <div id="controls">
+      <button id="btn-calcular-ruta">Calcular ruta más corta</button>
+      <button id="btn-euleriano">Verificar Euleriano</button>
+      <button id="btn-hamiltoniano">Verificar Hamiltoniano</button>
+      <button id="btn-menu">Volver al menú</button>
+    </div>
+
+    <div id="resultado"></div>
+  </div>
+
+  <!-- Pantalla: Game Over -->
+  <div id="screen-gameover" class="screen" style="display:none">
+    <h2 id="gameover-title">¡Partida terminada!</h2>
+    <div id="gameover-stats"></div>
+    <button id="btn-gameover-menu" class="menu-btn">Volver al menú</button>
+  </div>
 
   <script type="module" src="js/main.js"></script>
 </body>

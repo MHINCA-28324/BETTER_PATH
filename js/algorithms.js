@@ -1,57 +1,57 @@
 // algorithms.js
 // Funciones puras: reciben un Graph, devuelven resultados. No tocan el DOM.
 
-export function dijkstra(graph, startId, endId) {
-    const distances = new Map();
-    const previous = new Map();
-    const visited = new Set();
-  
-    for (const id of graph.getAllNodeIds()) {
-      distances.set(id, Infinity);
-      previous.set(id, null);
-    }
-    distances.set(startId, 0);
-  
-    while (visited.size < graph.getAllNodeIds().length) {
-      // Nodo no visitado con menor distancia
-      let current = null;
-      let minDist = Infinity;
-      for (const [id, dist] of distances.entries()) {
-        if (!visited.has(id) && dist < minDist) {
-          minDist = dist;
-          current = id;
-        }
-      }
-  
-      if (current === null) break; // resto son inalcanzables
-      if (current === endId) break; // ya llegamos
-  
-      visited.add(current);
-  
-      for (const { to, weight } of graph.getNeighbors(current)) {
-        if (visited.has(to)) continue;
-        const newDist = distances.get(current) + weight;
-        if (newDist < distances.get(to)) {
-          distances.set(to, newDist);
-          previous.set(to, current);
-        }
-      }
-    }
-  
-    // Reconstruir el camino
-    const path = [];
-    let step = endId;
-    while (step !== null) {
-      path.unshift(step);
-      step = previous.get(step);
-    }
-  
-    if (distances.get(endId) === Infinity) {
-      return { exists: false, path: [], distance: Infinity };
-    }
-  
-    return { exists: true, path, distance: distances.get(endId) };
+export function dijkstra(graph, startId, endId, blocked = new Set()) {
+  const distances = new Map();
+  const previous = new Map();
+  const visited = new Set();
+
+  for (const id of graph.getAllNodeIds()) {
+    distances.set(id, Infinity);
+    previous.set(id, null);
   }
+  distances.set(startId, 0);
+
+  while (visited.size < graph.getAllNodeIds().length) {
+    let current = null;
+    let minDist = Infinity;
+    for (const [id, dist] of distances.entries()) {
+      if (!visited.has(id) && dist < minDist) {
+        minDist = dist;
+        current = id;
+      }
+    }
+
+    if (current === null) break;
+    if (current === endId) break;
+
+    visited.add(current);
+
+    for (const { to, weight } of graph.getNeighbors(current)) {
+      if (visited.has(to)) continue;
+      if (blocked.has(to) && to !== endId) continue; // evita nodos bloqueados (ej. obligatorias ya cursadas)
+
+      const newDist = distances.get(current) + weight;
+      if (newDist < distances.get(to)) {
+        distances.set(to, newDist);
+        previous.set(to, current);
+      }
+    }
+  }
+
+  const path = [];
+  let step = endId;
+  while (step !== null) {
+    path.unshift(step);
+    step = previous.get(step);
+  }
+
+  if (distances.get(endId) === Infinity) {
+    return { exists: false, path: [], distance: Infinity };
+  }
+
+  return { exists: true, path, distance: distances.get(endId) };
+}
   
   export function checkEulerianPath(graph) {
     const nodeIds = graph.getAllNodeIds();
