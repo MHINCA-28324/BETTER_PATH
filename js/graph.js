@@ -1,5 +1,4 @@
 // graph.js
-// Estructura de datos base: grafo no dirigido y ponderado (ajustable a dirigido si lo necesitan)
 
 export class Graph {
     constructor() {
