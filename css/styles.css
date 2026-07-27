@@ -235,17 +235,12 @@ button:active{
 
 }
 
-canvas{
-
-    display:block;
-
-    margin:auto;
-
-    background:white;
-
-    border-radius:18px;
-
-}
+canvas {
+    display: block;
+    margin: auto;
+    background: #2a2a3d;
+    border-radius: 18px;
+  }
 
 /*----------------------------------------------------*/
 /* CONTROLES */
